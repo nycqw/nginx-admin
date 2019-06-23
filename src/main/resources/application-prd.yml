@@ -1,0 +1,11 @@
+
+server:
+  port: 8889
+spring:
+  application:
+    name: nginx
+
+
+nginx:
+  path: D:\software\nginx-1.6.3
+  config: D:\software\nginx-1.6.3\conf

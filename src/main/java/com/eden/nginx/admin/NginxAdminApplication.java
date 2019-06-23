@@ -1,4 +1,4 @@
-package com.eden.nginxadmin;
+package com.eden.nginx.admin;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
