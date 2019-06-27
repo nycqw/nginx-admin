@@ -10,6 +10,7 @@ import com.github.odiszapc.nginxparser.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -62,19 +63,20 @@ public class ServerServiceImpl implements ServerService {
     @Override
     public void save(NginxServer server) {
         NgxConfig conf = context.read();
-        //备份配置
         String bakConf = context.toString(conf);
-        List<NgxEntry> ngxServers = conf.findAll(NgxConfig.BLOCK, "http", "server");
+        NgxBlock http = conf.findBlock("http");
+        List<NgxEntry> ngxServers = http.findAll(NgxConfig.BLOCK, "server");
 
         try {
             NgxBlock ngxServer = findServer(server, ngxServers);
             if (ngxServer == null) {
                 ngxServer = new NgxBlock();
-                dealServerDomain(server, ngxServer);
-                conf.addEntry(ngxServer);
+                ngxServer.addValue("server");
+                handleServerDomain(server, ngxServer);
+                http.addEntry(ngxServer);
             }
-            dealServerParam(server, ngxServer);
-            dealServerLocation(server, ngxServer);
+            handleServerParam(server, ngxServer);
+            handleServerLocation(server, ngxServer);
 
             context.save(conf);
         } catch (Exception e) {
@@ -153,18 +155,18 @@ public class ServerServiceImpl implements ServerService {
         return locations;
     }
 
-    private void dealServerDomain(NginxServer server, NgxBlock ngxServer) {
+    private void handleServerDomain(NginxServer server, NgxBlock ngxServer) {
         NgxParam portParam = new NgxParam();
         portParam.addValue("listen");
         portParam.addValue(String.valueOf(server.getPort()));
         ngxServer.addEntry(portParam);
         NgxParam domainParam = new NgxParam();
         domainParam.addValue("server_name");
-        domainParam.addValue(String.valueOf(server.getPort()));
+        domainParam.addValue(String.valueOf(server.getName()));
         ngxServer.addEntry(domainParam);
     }
 
-    private void dealServerParam(NginxServer server, NgxBlock ngxServer) {
+    private void handleServerParam(NginxServer server, NgxBlock ngxServer) {
         List<NginxParam> params = server.getParams();
         List<NgxParam> ngxParams = findAllParam(ngxServer);
         if (!CollectionUtils.isEmpty(ngxParams)) {
@@ -177,33 +179,44 @@ public class ServerServiceImpl implements ServerService {
             }
         }
         for (NginxParam param : params) {
-            NgxParam ngxParam = new NgxParam();
-            ngxParam.addValue(param.getName());
-            ngxParam.addValue(param.getValue());
-            ngxServer.addEntry(ngxParam);
+            String name = param.getName();
+            if (!StringUtils.isEmpty(name)) {
+                NgxParam ngxParam = new NgxParam();
+                ngxParam.addValue(name);
+                ngxParam.addValue(param.getValue());
+                ngxServer.addEntry(ngxParam);
+            }
         }
     }
 
-    private void dealServerLocation(NginxServer server, NgxBlock ngxServer) {
+    private void handleServerLocation(NginxServer server, NgxBlock ngxServer) {
         List<NginxLocation> locations = server.getLocations();
         for (NginxLocation location : locations) {
-            NgxBlock ngxLocation = findBlock(ngxServer, "location", location.getPath());
-            if (ngxLocation != null) {
-                ngxLocation.getEntries().clear();
-                ngxServer.remove(ngxLocation);
-            } else {
-                ngxLocation = new NgxBlock();
-            }
-
-            List<NginxLocation.Attr> attrs = location.getAttrs();
-            if (!CollectionUtils.isEmpty(attrs)) {
-                for (NginxLocation.Attr attr : attrs) {
-                    NgxParam ngxParam = new NgxParam();
-                    ngxParam.addValue(attr.getName());
-                    ngxParam.addValue(attr.getValue());
-                    ngxLocation.addEntry(ngxParam);
+            String path = location.getPath();
+            if (!StringUtils.isEmpty(path)) {
+                NgxBlock ngxLocation = findBlock(ngxServer, "location", path);
+                if (ngxLocation != null) {
+                    ngxLocation.getEntries().clear();
+                    ngxServer.remove(ngxLocation);
+                } else {
+                    ngxLocation = new NgxBlock();
+                    ngxLocation.addValue("location");
+                    ngxLocation.addValue(path);
                 }
-                ngxServer.addEntry(ngxLocation);
+
+                List<NginxLocation.Attr> attrs = location.getAttrs();
+                if (!CollectionUtils.isEmpty(attrs)) {
+                    for (NginxLocation.Attr attr : attrs) {
+                        String name = attr.getName();
+                        if (!StringUtils.isEmpty(name)) {
+                            NgxParam ngxParam = new NgxParam();
+                            ngxParam.addValue(name);
+                            ngxParam.addValue(attr.getValue());
+                            ngxLocation.addEntry(ngxParam);
+                        }
+                    }
+                    ngxServer.addEntry(ngxLocation);
+                }
             }
         }
     }

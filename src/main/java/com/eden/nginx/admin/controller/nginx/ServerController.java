@@ -1,4 +1,4 @@
-package com.eden.nginx.admin.controller;
+package com.eden.nginx.admin.controller.nginx;
 
 import com.eden.nginx.admin.domain.dto.NginxServer;
 import com.eden.nginx.admin.service.ServerService;

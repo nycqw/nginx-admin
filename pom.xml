@@ -38,7 +38,7 @@
         <dependency>
             <groupId>com.github.odiszapc</groupId>
             <artifactId>nginxparser</artifactId>
-            <version>0.9.3</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
