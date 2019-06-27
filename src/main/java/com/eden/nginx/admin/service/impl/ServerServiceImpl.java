@@ -85,6 +85,24 @@ public class ServerServiceImpl implements ServerService {
         }
     }
 
+    @Override
+    public void delete(NginxServer server) {
+        NgxConfig conf = context.read();
+        String bakConf = context.toString(conf);
+        NgxBlock http = conf.findBlock("http");
+        List<NgxEntry> ngxServers = http.findAll(NgxConfig.BLOCK, "server");
+        try {
+            NgxBlock ngxServer = findServer(server, ngxServers);
+            if (ngxServer != null) {
+                http.remove(ngxServer);
+            }
+            context.save(conf);
+        } catch (Exception e) {
+            context.save(bakConf);
+            throw new NginxOperationConfException("已回滚到上次配置:");
+        }
+    }
+
     private ArrayList<NginxParam> getNginxParams(NgxBlock server) {
         ArrayList<NginxParam> nginxParams = new ArrayList<>();
         List<NgxParam> params = findAllParam(server);

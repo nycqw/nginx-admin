@@ -13,4 +13,6 @@ public interface ServerService {
     List<NginxServer> list();
 
     void save(NginxServer server);
+
+    void delete(NginxServer server);
 }

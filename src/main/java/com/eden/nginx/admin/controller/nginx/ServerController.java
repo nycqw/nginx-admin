@@ -28,4 +28,9 @@ public class ServerController {
     public void saveServer(@RequestBody NginxServer server) {
         serverService.save(server);
     }
+
+    @PostMapping("delete")
+    public void deleteServer(@RequestBody NginxServer server) {
+        serverService.delete(server);
+    }
 }
