@@ -3,8 +3,10 @@ package com.eden.nginx.admin.controller.nginx;
 import com.eden.nginx.admin.domain.dto.NginxServer;
 import com.eden.nginx.admin.service.ServerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -25,12 +27,12 @@ public class ServerController {
     }
 
     @PostMapping("save")
-    public void saveServer(@RequestBody NginxServer server) {
+    public void saveServer(@RequestBody @Valid NginxServer server) {
         serverService.save(server);
     }
 
     @PostMapping("delete")
-    public void deleteServer(@RequestBody NginxServer server) {
+    public void deleteServer(@RequestBody @Valid NginxServer server) {
         serverService.delete(server);
     }
 }
