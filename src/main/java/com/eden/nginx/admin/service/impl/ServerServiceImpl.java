@@ -4,7 +4,7 @@ import com.eden.nginx.admin.config.NginxContext;
 import com.eden.nginx.admin.domain.dto.NginxLocation;
 import com.eden.nginx.admin.domain.dto.NginxParam;
 import com.eden.nginx.admin.domain.dto.NginxServer;
-import com.eden.nginx.admin.exception.NginxOperationConfException;
+import com.eden.nginx.admin.exception.NginxException;
 import com.eden.nginx.admin.service.ServerService;
 import com.github.odiszapc.nginxparser.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,22 +36,17 @@ public class ServerServiceImpl implements ServerService {
         for (NgxEntry ngxEntry : serverList) {
             NgxBlock server = (NgxBlock) ngxEntry;
             NginxServer nginxServer = new NginxServer();
-            //端口
             NgxParam listen = server.findParam("listen");
             if (null != listen) {
                 nginxServer.setPort(Integer.valueOf(listen.getValue()));
             }
-            //域名
             NgxParam server_name = server.findParam("server_name");
             if (null != server_name) {
                 nginxServer.setName(server_name.getValue());
             }
-
-            // 参数
             ArrayList<NginxParam> nginxParams = getNginxParams(server);
             nginxServer.setParams(nginxParams);
 
-            //Location
             List<NginxLocation> locations = getLocations(server);
             nginxServer.setLocations(locations);
 
@@ -81,7 +76,7 @@ public class ServerServiceImpl implements ServerService {
             context.save(conf);
         } catch (Exception e) {
             context.save(bakConf);
-            throw new NginxOperationConfException("已回滚到上次配置:");
+            throw new NginxException("已回滚到上次配置:");
         }
     }
 
@@ -99,7 +94,7 @@ public class ServerServiceImpl implements ServerService {
             context.save(conf);
         } catch (Exception e) {
             context.save(bakConf);
-            throw new NginxOperationConfException("已回滚到上次配置:");
+            throw new NginxException("已回滚到上次配置:");
         }
     }
 
@@ -198,12 +193,14 @@ public class ServerServiceImpl implements ServerService {
         }
         for (NginxParam param : params) {
             String name = param.getName();
-            if (!StringUtils.isEmpty(name)) {
-                NgxParam ngxParam = new NgxParam();
-                ngxParam.addValue(name);
-                ngxParam.addValue(param.getValue());
-                ngxServer.addEntry(ngxParam);
+            String value = param.getValue();
+            if (StringUtils.isEmpty(name) || StringUtils.isEmpty(value)) {
+                throw new NginxException("参数不能为空");
             }
+            NgxParam ngxParam = new NgxParam();
+            ngxParam.addValue(name);
+            ngxParam.addValue(value);
+            ngxServer.addEntry(ngxParam);
         }
     }
 

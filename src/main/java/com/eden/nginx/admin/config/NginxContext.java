@@ -1,7 +1,7 @@
 package com.eden.nginx.admin.config;
 
 import com.eden.nginx.admin.common.constants.Constants;
-import com.eden.nginx.admin.exception.NginxOperationConfException;
+import com.eden.nginx.admin.exception.NginxException;
 import com.github.odiszapc.nginxparser.NgxConfig;
 import com.github.odiszapc.nginxparser.NgxDumper;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +30,7 @@ public class NginxContext {
         try {
             return NgxConfig.read(nginxConfPath + Constants.NGINX_CONF_NAME);
         } catch (IOException e) {
-            throw new NginxOperationConfException();
+            throw new NginxException();
         }
     }
 
@@ -44,7 +44,7 @@ public class NginxContext {
             out.write(toString(conf).getBytes("UTF-8"));
             out.flush();
         } catch (Exception e) {
-            throw new NginxOperationConfException("Nginx配置文件写入失败");
+            throw new NginxException("Nginx配置文件写入失败");
         }
     }
 
@@ -57,7 +57,7 @@ public class NginxContext {
             out.write(conf.getBytes("UTF-8"));
             out.flush();
         } catch (Exception e) {
-            throw new NginxOperationConfException("Nginx配置文件写入失败");
+            throw new NginxException("Nginx配置文件写入失败");
         }
     }
 
@@ -69,7 +69,7 @@ public class NginxContext {
      */
     public static String toString(NgxConfig conf) {
         if (null == conf) {
-            throw new NginxOperationConfException("不能写入空配置");
+            throw new NginxException("不能写入空配置");
         }
         NgxDumper dumper = new NgxDumper(conf);
         return dumper.dump();
