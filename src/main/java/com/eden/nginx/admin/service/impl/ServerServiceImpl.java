@@ -52,6 +52,11 @@ public class ServerServiceImpl implements ServerService {
 
             result.add(nginxServer);
         }
+        if (!CollectionUtils.isEmpty(result)) {
+            for (int i=0; i<result.size(); i++) {
+                result.get(i).setId(i);
+            }
+        }
         return result;
     }
 
@@ -76,7 +81,7 @@ public class ServerServiceImpl implements ServerService {
             context.save(conf);
         } catch (Exception e) {
             context.save(bakConf);
-            throw new NginxException("已回滚到上次配置:");
+            throw new NginxException(e.getMessage());
         }
     }
 
@@ -194,9 +199,6 @@ public class ServerServiceImpl implements ServerService {
         for (NginxParam param : params) {
             String name = param.getName();
             String value = param.getValue();
-            if (StringUtils.isEmpty(name) || StringUtils.isEmpty(value)) {
-                throw new NginxException("参数不能为空");
-            }
             NgxParam ngxParam = new NgxParam();
             ngxParam.addValue(name);
             ngxParam.addValue(value);

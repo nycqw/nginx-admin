@@ -1,10 +1,8 @@
 package com.eden.nginx.admin.domain.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -15,16 +13,16 @@ import java.util.List;
 @Data
 public class NginxLocation {
 
-    @NotBlank
+    @NotEmpty
     private String path;
 
     private List<Attr> attrs;
 
     @Data
     public static class Attr{
-        @NotBlank
+        @NotEmpty(message = "参数值不能为空")
         private String name;
-        @NotBlank
+        @NotEmpty(message = "参数值不能为空")
         private String value;
     }
 }

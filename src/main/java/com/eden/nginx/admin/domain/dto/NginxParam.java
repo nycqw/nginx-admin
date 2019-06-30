@@ -2,7 +2,7 @@ package com.eden.nginx.admin.domain.dto;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 
 /**
  * @author chenqw
@@ -12,8 +12,8 @@ import javax.validation.constraints.NotBlank;
 @Data
 public class NginxParam {
 
-    @NotBlank(message = "参数名不能为空")
+    @NotEmpty(message = "参数名不能为空")
     private String name;
-    @NotBlank(message = "参数值不能为空")
+    @NotEmpty(message = "参数值不能为空")
     private String value;
 }

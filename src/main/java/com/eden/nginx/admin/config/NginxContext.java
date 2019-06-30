@@ -2,13 +2,15 @@ package com.eden.nginx.admin.config;
 
 import com.eden.nginx.admin.common.constants.Constants;
 import com.eden.nginx.admin.exception.NginxException;
-import com.github.odiszapc.nginxparser.NgxConfig;
-import com.github.odiszapc.nginxparser.NgxDumper;
+import com.github.odiszapc.nginxparser.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author chenqw
@@ -73,6 +75,20 @@ public class NginxContext {
         }
         NgxDumper dumper = new NgxDumper(conf);
         return dumper.dump();
+    }
+
+    public List<NgxBlock> findBlock(NgxBlock targetBlock, String blockName) {
+        List<NgxBlock> ngxEntries = new ArrayList<>();
+        for (NgxEntry entry : targetBlock.getEntries()) {
+            if (entry instanceof NgxBlock) {
+                NgxBlock ngxBlock = (NgxBlock) entry;
+                Iterator<NgxToken> iterator = ngxBlock.getTokens().iterator();
+                if (iterator.next().getToken().equals(blockName)) {
+                    ngxEntries.add(ngxBlock);
+                }
+            }
+        }
+        return ngxEntries;
     }
 
 }

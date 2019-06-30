@@ -1,6 +1,8 @@
 package com.eden.nginx.admin.controller.nginx;
 
+import com.eden.nginx.admin.aspect.annotation.Verify;
 import com.eden.nginx.admin.domain.dto.NginxServer;
+import com.eden.nginx.admin.domain.dto.Result;
 import com.eden.nginx.admin.service.ServerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -22,17 +24,21 @@ public class ServerController {
     private ServerService serverService;
 
     @GetMapping("list")
-    public List<NginxServer> listServer() {
-        return serverService.list();
+    public Result<List<NginxServer>> listServer() {
+        List<NginxServer> list = serverService.list();
+        return Result.success(list);
     }
 
     @PostMapping("save")
-    public void saveServer(@RequestBody @Valid NginxServer server) {
+    @Verify
+    public Result saveServer(@RequestBody NginxServer server) {
         serverService.save(server);
+        return Result.success();
     }
 
     @PostMapping("delete")
-    public void deleteServer(@RequestBody @Valid NginxServer server) {
+    public Result deleteServer(@RequestBody NginxServer server) {
         serverService.delete(server);
+        return Result.success();
     }
 }
