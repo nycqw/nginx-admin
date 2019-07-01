@@ -45,10 +45,13 @@ public class UpstreamServiceImpl implements UpstreamService {
                 NgxParam ngxParam = (NgxParam) server;
                 Iterator<NgxToken> tokenIterator = ngxParam.getTokens().iterator();
                 tokenIterator.next();
-                serverAddress.setName(tokenIterator.next().getToken());
-                serverAddress.setPort(Integer.parseInt(tokenIterator.next().getToken()));
-                String weight = tokenIterator.next().getToken();
-                if (!StringUtils.isEmpty(weight)) {
+                String[] domain = tokenIterator.next().getToken().split(":");
+                serverAddress.setName(domain[0]);
+                if (domain.length > 1) {
+                    serverAddress.setPort(Integer.parseInt(domain[1]));
+                }
+                if (tokenIterator.hasNext()) {
+                    String weight = tokenIterator.next().getToken();
                     serverAddress.setWeight(Integer.parseInt(weight));
                 }
                 serverAddressList.add(serverAddress);
@@ -107,8 +110,7 @@ public class UpstreamServiceImpl implements UpstreamService {
             for (NginxUpstream.ServerAddress serverAddress : serverAddressList) {
                 NgxParam ngxParam = new NgxParam();
                 ngxParam.addValue("server");
-                ngxParam.addValue(serverAddress.getName());
-                ngxParam.addValue(String.valueOf(serverAddress.getPort()));
+                ngxParam.addValue(serverAddress.getName() + ":" + serverAddress.getPort());
                 ngxParam.addValue(String.valueOf(serverAddress.getWeight()));
                 upstream.addEntry(ngxParam);
             }

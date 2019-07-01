@@ -7,5 +7,5 @@ spring:
 
 
 nginx:
-  path: D:\software\nginx-1.6.3
-  config: D:\software\nginx-1.6.3\conf
+  path: F:\install\nginx-1.8.1
+  config: F:\install\nginx-1.8.1\conf
