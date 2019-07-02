@@ -1,14 +1,15 @@
 package com.eden.nginx.admin.service.impl;
 
+import com.alibaba.dubbo.config.annotation.Reference;
 import com.eden.nginx.admin.config.NginxContext;
 import com.eden.nginx.admin.domain.dto.NginxUpstream;
 import com.eden.nginx.admin.exception.NginxException;
 import com.eden.nginx.admin.service.UpstreamService;
+import com.eden.resource.client.service.NginxService;
 import com.github.odiszapc.nginxparser.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -25,9 +26,12 @@ public class UpstreamServiceImpl implements UpstreamService {
     @Autowired
     private NginxContext context;
 
+    @Reference
+    private NginxService nginxService;
+
     @Override
     public List<NginxUpstream> list() {
-        NgxConfig ngxConfig = context.read();
+        NgxConfig ngxConfig = nginxService.read();
 
         ArrayList<NginxUpstream> nginxUpstreams = new ArrayList<>();
         List<NgxBlock> upstreamList = context.findBlock(ngxConfig, "upstream");

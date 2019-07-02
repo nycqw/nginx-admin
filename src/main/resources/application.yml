@@ -9,3 +9,16 @@ spring:
 nginx:
   path: F:\install\nginx-1.8.1
   config: F:\install\nginx-1.8.1\conf
+
+dubbo:
+  application:
+    name: resource-center
+  protocol:
+    name: dubbo
+    port: 20881
+  registry:
+    address: zookeeper://106.12.79.78:2181
+  consumer: # 在服务端设置消费端的调用规则
+    timeout: 5000 # 超时时间ms
+    retries: 2  # 重试次数
+    loadbalance: roundrobin # 负载均衡算法，缺省是随机 random。还可以有轮询 roundrobin、最不活跃优先 leastactive
