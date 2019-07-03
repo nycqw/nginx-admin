@@ -36,22 +36,27 @@ public class ParamValidAspect {
     }
 
     private void verifyParam(Object obj) throws IllegalAccessException {
+        if (obj == null) {
+            return;
+        }
         Field[] fields = obj.getClass().getDeclaredFields();
-        for (Field field : fields) {
-            field.setAccessible(true);
-            if (field.getClass().isPrimitive()
-                    || field.getType() == String.class
-                    ||  field.getType() == Integer.class) {
-                verifyNotEmpty(obj, field);
-                verifyNotNull(obj, field);
-            } else {
-                if (field.getType() == List.class) {
-                    List list = (List) field.get(obj);
-                    for (Object object : list) {
-                        verifyParam(object);
-                    }
+        if (fields != null && fields.length > 0) {
+            for (Field field : fields) {
+                field.setAccessible(true);
+                if (field.getClass().isPrimitive()
+                        || field.getType() == String.class
+                        ||  field.getType() == Integer.class) {
+                    verifyNotEmpty(obj, field);
+                    verifyNotNull(obj, field);
                 } else {
-                    verifyParam(field.get(obj));
+                    if (field.getType() == List.class) {
+                        List list = (List) field.get(obj);
+                        for (Object object : list) {
+                            verifyParam(object);
+                        }
+                    } else {
+                        verifyParam(field.get(obj));
+                    }
                 }
             }
         }

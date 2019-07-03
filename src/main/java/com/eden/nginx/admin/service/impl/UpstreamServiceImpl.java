@@ -29,7 +29,7 @@ public class UpstreamServiceImpl implements UpstreamService {
     public List<NginxUpstream> list() {
         NgxConfig ngxConfig = nginxService.read();
 
-        ArrayList<NginxUpstream> nginxUpstreams = new ArrayList<>();
+        List<NginxUpstream> nginxUpstreams = new ArrayList<>();
         List<NgxBlock> upstreamList = NgxUtil.findBlock(ngxConfig, "upstream");
         for (int i=0; i<upstreamList.size(); i++) {
             NginxUpstream nginxUpstream = new NginxUpstream();

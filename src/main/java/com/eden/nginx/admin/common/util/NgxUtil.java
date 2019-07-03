@@ -42,4 +42,16 @@ public class NgxUtil {
         return ngxEntries;
     }
 
+    public static <T> List<T> findEntryList(NgxBlock ngxBlock, Class entryType) {
+        List<T> result = new ArrayList<>();
+        Iterator<NgxEntry> iterator = ngxBlock.getEntries().iterator();
+        while (iterator.hasNext()) {
+            T entry = (T) iterator.next();
+            if (entryType.equals(entry.getClass())) {
+                result.add(entry);
+            }
+        }
+        return result;
+    }
+
 }

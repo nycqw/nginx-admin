@@ -4,7 +4,14 @@ server:
 spring:
   application:
     name: nginx
-
+  datasource:
+    name: resource
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      driver-class-name: com.mysql.jdbc.Driver
+      url: jdbc:mysql://106.12.79.78:3306/resource
+      username: root
+      password: Asd09876%
 
 nginx:
   path: F:\install\nginx-1.8.1
@@ -22,3 +29,9 @@ dubbo:
     timeout: 5000 # 超时时间ms
     retries: 2  # 重试次数
     loadbalance: roundrobin # 负载均衡算法，缺省是随机 random。还可以有轮询 roundrobin、最不活跃优先 leastactive
+
+mybatis:
+  # 注意：一定要对应mapper映射xml文件的所在路径
+  mapper-locations: classpath:mybatis/mapper/*.xml
+  # 注意：对应实体类的路径
+  type-aliases-package: com.eden.nginx.admin.domain.entity

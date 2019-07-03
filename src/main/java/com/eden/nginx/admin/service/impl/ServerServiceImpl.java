@@ -4,12 +4,17 @@ import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.eden.nginx.admin.common.util.NgxUtil;
 import com.eden.nginx.admin.domain.dto.NginxLocation;
-import com.eden.nginx.admin.domain.dto.NginxParam;
 import com.eden.nginx.admin.domain.dto.NginxServer;
+import com.eden.nginx.admin.domain.entity.NginxBlock;
+import com.eden.nginx.admin.domain.entity.NginxParam;
 import com.eden.nginx.admin.exception.NginxException;
+import com.eden.nginx.admin.mapper.NginxBlockMapper;
+import com.eden.nginx.admin.mapper.NginxParamMapper;
 import com.eden.nginx.admin.service.ServerService;
 import com.eden.resource.client.service.NginxService;
 import com.github.odiszapc.nginxparser.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -23,10 +28,17 @@ import java.util.List;
  * @since 2019/6/21
  */
 @Service
+@Slf4j
 public class ServerServiceImpl implements ServerService {
 
     @Reference
     private NginxService nginxService;
+
+    @Autowired
+    private NginxParamMapper nginxParamMapper;
+
+    @Autowired
+    private NginxBlockMapper nginxBlockMapper;
 
     @Override
     public List<NginxServer> list() {
@@ -46,7 +58,7 @@ public class ServerServiceImpl implements ServerService {
             if (null != server_name) {
                 nginxServer.setName(server_name.getValue());
             }
-            ArrayList<NginxParam> nginxParams = getNginxParams(server);
+            List<NginxParam> nginxParams = getNginxParams(server);
             nginxServer.setParams(nginxParams);
 
             List<NginxLocation> locations = getLocations(server);
@@ -55,7 +67,7 @@ public class ServerServiceImpl implements ServerService {
             result.add(nginxServer);
         }
         if (!CollectionUtils.isEmpty(result)) {
-            for (int i=0; i<result.size(); i++) {
+            for (int i = 0; i < result.size(); i++) {
                 result.get(i).setId(i);
             }
         }
@@ -81,9 +93,57 @@ public class ServerServiceImpl implements ServerService {
             handleServerLocation(server, ngxServer);
 
             nginxService.save(conf);
+            saveNginxConf(conf, null);
         } catch (Exception e) {
             nginxService.save(bakConf);
             throw new NginxException(e.getMessage());
+        }
+        nginxService.save(conf);
+    }
+
+    public NgxConfig recovery() {
+        NgxConfig ngxConfig = new NgxConfig();
+        NginxBlock nginxBlock = nginxBlockMapper.selectByPrimaryKey(170);
+        NgxBlock ngxBlock = recoveryNgxBlock(nginxBlock);
+        ngxConfig.addEntry(ngxBlock);
+        return ngxConfig;
+    }
+
+    private NgxBlock recoveryNgxBlock(NginxBlock nginxBlock) {
+        NgxBlock ngxBlock = new NgxBlock();
+        ngxBlock.addValue(nginxBlock.getName());
+        String value = nginxBlock.getValue();
+        if (!StringUtils.isEmpty(value)) {
+            ngxBlock.addValue(value);
+        }
+
+        recoveryNgxParam(ngxBlock, nginxBlock);
+
+        NginxBlock param = new NginxBlock();
+        param.setPid(nginxBlock.getId());
+        List<NginxBlock> nginxBlocks = nginxBlockMapper.selectBySelective(param);
+        if (!CollectionUtils.isEmpty(nginxBlocks)) {
+            for (NginxBlock block : nginxBlocks) {
+                ngxBlock.addEntry(recoveryNgxBlock(block));
+            }
+        }
+        return ngxBlock;
+    }
+
+    private void recoveryNgxParam(NgxBlock ngxBlock, NginxBlock nginxBlock) {
+        NginxParam params = new NginxParam();
+        params.setPid(nginxBlock.getId());
+        List<NginxParam> nginxParams = nginxParamMapper.selectBySelective(params);
+        if (!CollectionUtils.isEmpty(nginxParams)) {
+            for (NginxParam nginxParam : nginxParams) {
+                NgxParam ngxParam = new NgxParam();
+                ngxParam.addValue(nginxParam.getName());
+                String[] tokens = nginxParam.getValue().split(" ");
+                for (String token : tokens) {
+                    ngxParam.addValue(token);
+                }
+                ngxBlock.addEntry(ngxParam);
+            }
         }
     }
 
@@ -107,7 +167,7 @@ public class ServerServiceImpl implements ServerService {
 
     private ArrayList<NginxParam> getNginxParams(NgxBlock server) {
         ArrayList<NginxParam> nginxParams = new ArrayList<>();
-        List<NgxParam> params = findAllParam(server);
+        List<NgxParam> params = NgxUtil.findEntryList(server, NgxParam.class);
         for (NgxParam param : params) {
             Iterator<NgxToken> iterator = param.getTokens().iterator();
             NginxParam nginxParam = new NginxParam();
@@ -116,31 +176,10 @@ public class ServerServiceImpl implements ServerService {
                 continue;
             }
             nginxParam.setName(name);
-            nginxParam.setValue(getParamValue(iterator));
+            nginxParam.setValue(getValue(iterator));
             nginxParams.add(nginxParam);
         }
         return nginxParams;
-    }
-
-    private String getParamValue(Iterator<NgxToken> iterator) {
-        StringBuilder value = new StringBuilder();
-        while (iterator.hasNext()) {
-            value.append(iterator.next().getToken()).append(" ");
-        }
-        return value.toString().trim();
-    }
-
-    private List<NgxParam> findAllParam(NgxBlock ngxBlock) {
-        List<NgxParam> result = new ArrayList<>();
-        Iterator<NgxEntry> iterator = ngxBlock.getEntries().iterator();
-        while (iterator.hasNext()) {
-            NgxEntry entry = iterator.next();
-            NgxEntryType type = NgxEntryType.fromClass(entry.getClass());
-            if (NgxEntryType.PARAM.equals(type)) {
-                result.add((NgxParam) entry);
-            }
-        }
-        return result;
     }
 
     private List<NginxLocation> getLocations(NgxBlock server) {
@@ -188,7 +227,7 @@ public class ServerServiceImpl implements ServerService {
 
     private void handleServerParam(NginxServer server, NgxBlock ngxServer) {
         List<NginxParam> params = server.getParams();
-        List<NgxParam> ngxParams = findAllParam(ngxServer);
+        List<NgxParam> ngxParams = NgxUtil.findEntryList(ngxServer, NgxParam.class);
         if (!CollectionUtils.isEmpty(ngxParams)) {
             for (NgxParam nginxParam : ngxParams) {
                 String name = nginxParam.getTokens().iterator().next().getToken();
@@ -277,6 +316,53 @@ public class ServerServiceImpl implements ServerService {
             }
         }
         return null;
+    }
+
+    private void saveNginxConf(NgxBlock ngxBlock, Integer pid) {
+        int id = saveNginxBlock(ngxBlock, pid);
+        saveNginxParam(ngxBlock, id);
+
+        List<NgxBlock> ngxBlocks = NgxUtil.findEntryList(ngxBlock, NgxBlock.class);
+        for (NgxBlock block : ngxBlocks) {
+            saveNginxConf(block, id);
+        }
+    }
+
+    private void saveNginxParam(NgxBlock ngxBlock, Integer id) {
+        List<NgxParam> ngxParams = NgxUtil.findEntryList(ngxBlock, NgxParam.class);
+        if (!CollectionUtils.isEmpty(ngxParams)) {
+            for (NgxParam ngxParam : ngxParams) {
+                NginxParam nginxParam = new NginxParam();
+                nginxParam.setPid(id);
+                Iterator<NgxToken> iterator = ngxParam.getTokens().iterator();
+                nginxParam.setName(iterator.next().getToken());
+                nginxParam.setValue(getValue(iterator));
+                nginxParamMapper.insertSelective(nginxParam);
+            }
+        }
+    }
+
+    private int saveNginxBlock(NgxBlock ngxBlock, Integer pid) {
+        NginxBlock nginxBlock = new NginxBlock();
+        if (pid == null) {
+            nginxBlock.setName("nginx.conf");
+            nginxBlock.setDescription("NGINX配置文件");
+        } else {
+            Iterator<NgxToken> iterator = ngxBlock.getTokens().iterator();
+            nginxBlock.setName(iterator.next().getToken());
+            nginxBlock.setValue(getValue(iterator));
+            nginxBlock.setPid(pid);
+        }
+        nginxBlockMapper.insert(nginxBlock);
+        return nginxBlock.getId();
+    }
+
+    private String getValue(Iterator<NgxToken> iterator) {
+        StringBuilder value = new StringBuilder();
+        while (iterator.hasNext()) {
+            value.append(iterator.next().getToken()).append(" ");
+        }
+        return value.toString().trim();
     }
 
 }

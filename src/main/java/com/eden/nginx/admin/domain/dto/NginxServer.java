@@ -1,9 +1,8 @@
 package com.eden.nginx.admin.domain.dto;
 
+import com.eden.nginx.admin.domain.entity.NginxParam;
 import lombok.Data;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
