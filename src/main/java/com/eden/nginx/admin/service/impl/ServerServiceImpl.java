@@ -1,14 +1,15 @@
 package com.eden.nginx.admin.service.impl;
 
-import com.eden.nginx.admin.config.NginxContext;
+import com.alibaba.dubbo.config.annotation.Reference;
+import com.alibaba.dubbo.config.annotation.Service;
+import com.eden.nginx.admin.common.util.NgxUtil;
 import com.eden.nginx.admin.domain.dto.NginxLocation;
 import com.eden.nginx.admin.domain.dto.NginxParam;
 import com.eden.nginx.admin.domain.dto.NginxServer;
 import com.eden.nginx.admin.exception.NginxException;
 import com.eden.nginx.admin.service.ServerService;
+import com.eden.resource.client.service.NginxService;
 import com.github.odiszapc.nginxparser.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -24,12 +25,13 @@ import java.util.List;
 @Service
 public class ServerServiceImpl implements ServerService {
 
-    @Autowired
-    private NginxContext context;
+    @Reference
+    private NginxService nginxService;
 
     @Override
     public List<NginxServer> list() {
-        NgxConfig ngxConfig = context.read();
+
+        NgxConfig ngxConfig = nginxService.read();
 
         List<NgxEntry> serverList = ngxConfig.findAll(NgxBlock.class, "http", "server");
         List<NginxServer> result = new ArrayList<>();
@@ -62,8 +64,8 @@ public class ServerServiceImpl implements ServerService {
 
     @Override
     public void save(NginxServer server) {
-        NgxConfig conf = context.read();
-        String bakConf = context.toString(conf);
+        NgxConfig conf = nginxService.read();
+        String bakConf = NgxUtil.toString(conf);
         NgxBlock http = conf.findBlock("http");
         List<NgxEntry> ngxServers = http.findAll(NgxConfig.BLOCK, "server");
 
@@ -78,17 +80,17 @@ public class ServerServiceImpl implements ServerService {
             handleServerParam(server, ngxServer);
             handleServerLocation(server, ngxServer);
 
-            context.save(conf);
+            nginxService.save(conf);
         } catch (Exception e) {
-            context.save(bakConf);
+            nginxService.save(bakConf);
             throw new NginxException(e.getMessage());
         }
     }
 
     @Override
     public void delete(NginxServer server) {
-        NgxConfig conf = context.read();
-        String bakConf = context.toString(conf);
+        NgxConfig conf = nginxService.read();
+        String bakConf = NgxUtil.toString(conf);
         NgxBlock http = conf.findBlock("http");
         List<NgxEntry> ngxServers = http.findAll(NgxConfig.BLOCK, "server");
         try {
@@ -96,9 +98,9 @@ public class ServerServiceImpl implements ServerService {
             if (ngxServer != null) {
                 http.remove(ngxServer);
             }
-            context.save(conf);
+            nginxService.save(conf);
         } catch (Exception e) {
-            context.save(bakConf);
+            nginxService.save(bakConf);
             throw new NginxException("已回滚到上次配置:");
         }
     }

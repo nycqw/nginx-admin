@@ -1,14 +1,13 @@
 package com.eden.nginx.admin.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Reference;
-import com.eden.nginx.admin.config.NginxContext;
+import com.alibaba.dubbo.config.annotation.Service;
+import com.eden.nginx.admin.common.util.NgxUtil;
 import com.eden.nginx.admin.domain.dto.NginxUpstream;
 import com.eden.nginx.admin.exception.NginxException;
 import com.eden.nginx.admin.service.UpstreamService;
 import com.eden.resource.client.service.NginxService;
 import com.github.odiszapc.nginxparser.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
@@ -23,9 +22,6 @@ import java.util.List;
 @Service
 public class UpstreamServiceImpl implements UpstreamService {
 
-    @Autowired
-    private NginxContext context;
-
     @Reference
     private NginxService nginxService;
 
@@ -34,7 +30,7 @@ public class UpstreamServiceImpl implements UpstreamService {
         NgxConfig ngxConfig = nginxService.read();
 
         ArrayList<NginxUpstream> nginxUpstreams = new ArrayList<>();
-        List<NgxBlock> upstreamList = context.findBlock(ngxConfig, "upstream");
+        List<NgxBlock> upstreamList = NgxUtil.findBlock(ngxConfig, "upstream");
         for (int i=0; i<upstreamList.size(); i++) {
             NginxUpstream nginxUpstream = new NginxUpstream();
             nginxUpstream.setId(i);
@@ -68,9 +64,9 @@ public class UpstreamServiceImpl implements UpstreamService {
 
     @Override
     public void save(NginxUpstream nginxUpstream) {
-        NgxConfig conf = context.read();
-        String bakConf = context.toString(conf);
-        List<NgxBlock> upstreamList = context.findBlock(conf, "upstream");
+        NgxConfig conf = nginxService.read();
+        String bakConf = NgxUtil.toString(conf);
+        List<NgxBlock> upstreamList = NgxUtil.findBlock(conf, "upstream");
 
         try {
             NgxBlock upstream = findUpstream(nginxUpstream, upstreamList);
@@ -81,27 +77,27 @@ public class UpstreamServiceImpl implements UpstreamService {
                 conf.addEntry(upstream);
             }
             handlerServerAddress(nginxUpstream, upstream);
-            context.save(conf);
+            nginxService.save(conf);
         } catch (Exception e) {
-            context.save(bakConf);
+            nginxService.save(bakConf);
             throw new NginxException(e.getMessage());
         }
     }
 
     @Override
     public void delete(NginxUpstream nginxUpstream) {
-        NgxConfig conf = context.read();
-        String bakConf = context.toString(conf);
-        List<NgxBlock> upstreamList = context.findBlock(conf, "upstream");
+        NgxConfig conf = nginxService.read();
+        String bakConf = NgxUtil.toString(conf);
+        List<NgxBlock> upstreamList = NgxUtil.findBlock(conf, "upstream");
 
         try {
             NgxBlock upstream = findUpstream(nginxUpstream, upstreamList);
             if (upstream != null) {
                 conf.remove(upstream);
-                context.save(conf);
+                nginxService.save(conf);
             }
         } catch (Exception e) {
-            context.save(bakConf);
+            nginxService.save(bakConf);
             throw new NginxException(e.getMessage());
         }
     }
