@@ -14,18 +14,14 @@ import java.util.List;
  */
 @Data
 public class NginxServer {
-
     private Integer id;
 
-    /**
-     * 监听端口
-     */
+    @NotNull(message = "服务器IP地址不能为空")
+    private String ip;
+
     @NotNull(message = "端口不能为空")
     private Integer port;
 
-    /**
-     * 监听域名
-     */
     @NotEmpty(message = "域名不能为空")
     private String name;
 

@@ -59,6 +59,9 @@
       <if test="id != null" >
         id,
       </if>
+      <if test="ip != null" >
+        ip,
+      </if>
       <if test="name != null" >
         name,
       </if>
@@ -87,6 +90,9 @@
     <trim prefix="values (" suffix=")" suffixOverrides="," >
       <if test="id != null" >
         #{id,jdbcType=INTEGER},
+      </if>
+      <if test="ip != null" >
+        #{ip,jdbcType=VARCHAR},
       </if>
       <if test="name != null" >
         #{name,jdbcType=VARCHAR},

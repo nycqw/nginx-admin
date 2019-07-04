@@ -8,6 +8,8 @@ import java.util.Date;
 public class NginxBlock {
     private Integer id;
 
+    private String ip;
+
     private String name;
 
     private String value;

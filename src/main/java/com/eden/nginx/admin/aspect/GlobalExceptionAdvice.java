@@ -1,6 +1,7 @@
 package com.eden.nginx.admin.aspect;
 
 import com.eden.nginx.admin.domain.dto.Result;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
  * @since 2018/11/28
  */
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionAdvice {
 
     /**
@@ -31,6 +33,7 @@ public class GlobalExceptionAdvice {
     @ExceptionHandler(Exception.class)
     @ResponseBody
     public Result exceptionHandle(Exception e) {
+        log.error("系统异常！", e);
         return Result.fail(e.getMessage());
     }
 
@@ -44,6 +47,7 @@ public class GlobalExceptionAdvice {
     @ResponseBody
     public Result argumentValidExceptionHandle(MethodArgumentNotValidException e) {
         FieldError fieldError = (FieldError) e.getBindingResult().getAllErrors().get(0);
+        log.error("参数校验异常！", e);
         return Result.fail(fieldError.getDefaultMessage());
     }
 
