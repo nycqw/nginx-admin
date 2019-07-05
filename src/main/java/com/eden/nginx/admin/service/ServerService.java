@@ -10,7 +10,7 @@ import java.util.List;
  * @since 2019/6/21
  */
 public interface ServerService {
-    List<NginxServer> list(String ip);
+    List<NginxServer> list();
 
     void save(NginxServer server);
 

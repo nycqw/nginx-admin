@@ -6,11 +6,13 @@ import com.eden.nginx.admin.common.util.NgxUtil;
 import com.eden.nginx.admin.domain.dto.NginxLocation;
 import com.eden.nginx.admin.domain.dto.NginxServer;
 import com.eden.nginx.admin.domain.entity.NginxParam;
+import com.eden.nginx.admin.domain.entity.SysServer;
 import com.eden.nginx.admin.exception.NginxException;
 import com.eden.nginx.admin.mapper.NginxBlockMapper;
 import com.eden.nginx.admin.service.NginxConfigService;
 import com.eden.nginx.admin.service.NginxService;
 import com.eden.nginx.admin.service.ServerService;
+import com.eden.nginx.admin.service.SysServerService;
 import com.github.odiszapc.nginxparser.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,44 +34,51 @@ import java.util.List;
 public class ServerServiceImpl implements ServerService {
 
     @Autowired
-    private NginxBlockMapper nginxBlockMapper;
-
-    @Autowired
     private NginxConfigService nginxConfigService;
 
-    @Reference
+    @Autowired
     private NginxService nginxService;
 
+    @Autowired
+    private SysServerService sysServerService;
+
     @Override
-    public List<NginxServer> list(String ip) {
-        NgxConfig conf = nginxConfigService.getNgxConf(ip);
-
-        List<NgxEntry> serverList = conf.findAll(NgxBlock.class, "http", "server");
+    public List<NginxServer> list() {
         List<NginxServer> result = new ArrayList<>();
-        for (NgxEntry ngxEntry : serverList) {
-            NgxBlock server = (NgxBlock) ngxEntry;
-            NginxServer nginxServer = new NginxServer();
-            NgxParam listen = server.findParam("listen");
-            if (null != listen) {
-                nginxServer.setPort(Integer.valueOf(listen.getValue()));
-            }
-            NgxParam server_name = server.findParam("server_name");
-            if (null != server_name) {
-                nginxServer.setName(server_name.getValue());
-            }
-            List<NginxParam> nginxParams = getNginxParams(server);
-            nginxServer.setParams(nginxParams);
-
-            List<NginxLocation> locations = getLocations(server);
-            nginxServer.setLocations(locations);
-
-            result.add(nginxServer);
+        List<SysServer> sysServers = sysServerService.list();
+        if (CollectionUtils.isEmpty(sysServers)) {
+            return result;
         }
-        if (!CollectionUtils.isEmpty(result)) {
-            for (int i = 0; i < result.size(); i++) {
-                result.get(i).setId(i);
+        for (SysServer sysServer : sysServers) {
+            String ip = sysServer.getIp();
+            NgxConfig conf = nginxConfigService.getNgxConf(ip);
+
+            List<NgxEntry> serverList = conf.findAll(NgxBlock.class, "http", "server");
+            if (CollectionUtils.isEmpty(serverList)) {
+                continue;
+            }
+
+            for (NgxEntry ngxEntry : serverList) {
+                NgxBlock server = (NgxBlock) ngxEntry;
+                NginxServer nginxServer = new NginxServer();
+                NgxParam listen = server.findParam("listen");
+                if (null != listen) {
+                    nginxServer.setPort(Integer.valueOf(listen.getValue()));
+                }
+                NgxParam server_name = server.findParam("server_name");
+                if (null != server_name) {
+                    nginxServer.setName(server_name.getValue());
+                }
+                List<NginxParam> nginxParams = getNginxParams(server);
+                nginxServer.setParams(nginxParams);
+
+                List<NginxLocation> locations = getLocations(server);
+                nginxServer.setLocations(locations);
+
+                result.add(nginxServer);
             }
         }
+
         return result;
     }
 

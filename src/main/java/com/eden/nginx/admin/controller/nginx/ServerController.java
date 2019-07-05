@@ -25,7 +25,7 @@ public class ServerController {
 
     @GetMapping("list")
     public Result<List<NginxServer>> listServer(@RequestParam String ip) {
-        List<NginxServer> list = serverService.list(ip);
+        List<NginxServer> list = serverService.list();
         return Result.success(list);
     }
 
