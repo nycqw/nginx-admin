@@ -86,11 +86,6 @@
             <version>${dubbo.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.eden.resource.client</groupId>
-            <artifactId>resource-api</artifactId>
-            <version>${resource.api.version}</version>
-        </dependency>
     </dependencies>
 
     <build>

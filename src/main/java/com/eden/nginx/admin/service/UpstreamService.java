@@ -10,7 +10,8 @@ import java.util.List;
  * @since 2019/6/29
  */
 public interface UpstreamService {
-    List<NginxUpstream> list();
+
+    List<NginxUpstream> list(String ip);
 
     void save(NginxUpstream nginxUpstream);
 

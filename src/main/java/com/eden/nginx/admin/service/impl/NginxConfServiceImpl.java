@@ -1,13 +1,12 @@
 package com.eden.nginx.admin.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Reference;
 import com.eden.nginx.admin.common.util.NgxUtil;
 import com.eden.nginx.admin.domain.entity.NginxBlock;
 import com.eden.nginx.admin.domain.entity.NginxParam;
 import com.eden.nginx.admin.mapper.NginxBlockMapper;
 import com.eden.nginx.admin.mapper.NginxParamMapper;
 import com.eden.nginx.admin.service.NginxConfigService;
-import com.eden.resource.client.service.NginxService;
+import com.eden.nginx.admin.service.NginxService;
 import com.github.odiszapc.nginxparser.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,7 +26,7 @@ public class NginxConfServiceImpl implements NginxConfigService {
     @Autowired
     private NginxBlockMapper nginxBlockMapper;
 
-    @Reference
+    @Autowired
     private NginxService nginxService;
 
     @Override
@@ -38,7 +37,7 @@ public class NginxConfServiceImpl implements NginxConfigService {
         List<NginxBlock> nginxBlocks = nginxBlockMapper.selectBySelective(params);
         NgxConfig ngxConfig;
         if (CollectionUtils.isEmpty(nginxBlocks)) {
-            ngxConfig = nginxService.read();
+            ngxConfig = nginxService.read(ip);
             saveNgxConf(ngxConfig, ip);
         } else {
             int id = nginxBlocks.get(0).getId();
@@ -78,6 +77,10 @@ public class NginxConfServiceImpl implements NginxConfigService {
         NgxConfig ngxConfig = new NgxConfig();
         NginxBlock nginxBlock = nginxBlockMapper.selectByPrimaryKey(id);
         NgxBlock ngxBlock = recoveryNgxBlock(nginxBlock);
+        Iterator<NgxToken> tokenIterator = ngxBlock.getTokens().iterator();
+        while (tokenIterator.hasNext()) {
+            ngxConfig.addValue(tokenIterator.next().getToken());
+        }
         Iterator<NgxEntry> iterator = ngxBlock.getEntries().iterator();
         while (iterator.hasNext()) {
             ngxConfig.addEntry(iterator.next());

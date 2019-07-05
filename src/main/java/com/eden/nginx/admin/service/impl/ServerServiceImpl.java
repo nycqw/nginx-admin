@@ -9,8 +9,8 @@ import com.eden.nginx.admin.domain.entity.NginxParam;
 import com.eden.nginx.admin.exception.NginxException;
 import com.eden.nginx.admin.mapper.NginxBlockMapper;
 import com.eden.nginx.admin.service.NginxConfigService;
+import com.eden.nginx.admin.service.NginxService;
 import com.eden.nginx.admin.service.ServerService;
-import com.eden.resource.client.service.NginxService;
 import com.github.odiszapc.nginxparser.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,7 +77,8 @@ public class ServerServiceImpl implements ServerService {
     @Override
     @Transactional
     public void save(NginxServer server) {
-        NgxConfig conf = nginxConfigService.getNgxConf(server.getIp());
+        String ip = server.getIp();
+        NgxConfig conf = nginxConfigService.getNgxConf(ip);
         String bakConf = NgxUtil.toString(conf);
         NgxBlock http = conf.findBlock("http");
         List<NgxEntry> ngxServers = http.findAll(NgxConfig.BLOCK, "server");
@@ -93,11 +94,11 @@ public class ServerServiceImpl implements ServerService {
             handleServerParam(server, ngxServer);
             handleServerLocation(server, ngxServer);
 
-            nginxConfigService.saveNgxConf(conf, server.getIp());
+            nginxConfigService.saveNgxConf(conf, ip);
             conf.getTokens().clear();
-            nginxService.save(conf);
+            nginxService.save(conf, ip);
         } catch (Exception e) {
-            nginxService.save(bakConf);
+            nginxService.bak(bakConf, ip);
             throw new NginxException(e.getMessage());
         }
     }
@@ -105,7 +106,8 @@ public class ServerServiceImpl implements ServerService {
     @Override
     @Transactional
     public void delete(NginxServer server) {
-        NgxConfig conf = nginxConfigService.getNgxConf(server.getIp());
+        String ip = server.getIp();
+        NgxConfig conf = nginxConfigService.getNgxConf(ip);
         String bakConf = NgxUtil.toString(conf);
 
         NgxBlock http = conf.findBlock("http");
@@ -116,11 +118,11 @@ public class ServerServiceImpl implements ServerService {
                 http.remove(ngxServer);
             }
 
-            nginxConfigService.saveNgxConf(conf, server.getIp());
+            nginxConfigService.saveNgxConf(conf, ip);
             conf.getTokens().clear();
-            nginxService.save(conf);
+            nginxService.save(conf, ip);
         } catch (Exception e) {
-            nginxService.save(bakConf);
+            nginxService.bak(bakConf, ip);
             throw new NginxException("已回滚到上次配置:");
         }
     }

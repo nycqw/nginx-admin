@@ -15,6 +15,8 @@ public class NginxUpstream {
 
     private int id;
     @NotEmpty
+    private String ip;
+    @NotEmpty
     private String name;
     private String description;
     private List<ServerAddress> serverAddressList;

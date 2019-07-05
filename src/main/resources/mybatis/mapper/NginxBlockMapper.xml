@@ -4,6 +4,7 @@
   <resultMap id="BaseResultMap" type="com.eden.nginx.admin.domain.entity.NginxBlock" >
     <id column="id" property="id" jdbcType="INTEGER" />
     <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="ip" property="ip" jdbcType="VARCHAR" />
     <result column="value" property="value" jdbcType="VARCHAR" />
     <result column="description" property="description" jdbcType="VARCHAR" />
     <result column="status" property="status" jdbcType="INTEGER" />

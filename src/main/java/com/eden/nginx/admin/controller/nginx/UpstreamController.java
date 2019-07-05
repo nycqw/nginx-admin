@@ -5,9 +5,7 @@ import com.eden.nginx.admin.domain.dto.NginxUpstream;
 import com.eden.nginx.admin.domain.dto.Result;
 import com.eden.nginx.admin.service.UpstreamService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -23,9 +21,9 @@ public class UpstreamController {
     @Autowired
     private UpstreamService upstreamService;
 
-    @RequestMapping("list")
-    public Result list() {
-        List<NginxUpstream> list = upstreamService.list();
+    @GetMapping("list")
+    public Result list(@RequestParam String ip) {
+        List<NginxUpstream> list = upstreamService.list(ip);
         return Result.success(list);
     }
 
