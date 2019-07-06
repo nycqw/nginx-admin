@@ -52,8 +52,10 @@ public class ServerServiceImpl implements ServerService {
             return result;
         }
 
+        int id = 0;
         for (SysServer sysServer : sysServers) {
             String ip = sysServer.getIp();
+            String path = sysServer.getPath();
             NgxConfig conf = nginxConfigService.getNgxConf(ip);
 
             List<NgxEntry> serverList = conf.findAll(NgxBlock.class, "http", "server");
@@ -64,6 +66,9 @@ public class ServerServiceImpl implements ServerService {
             for (NgxEntry ngxEntry : serverList) {
                 NgxBlock server = (NgxBlock) ngxEntry;
                 NginxServer nginxServer = new NginxServer();
+                nginxServer.setId(id++);
+                nginxServer.setIp(conf.getIp());
+                nginxServer.setPath(path);
                 NgxParam listen = server.findParam("listen");
                 if (null != listen) {
                     nginxServer.setPort(Integer.valueOf(listen.getValue()));
@@ -107,8 +112,6 @@ public class ServerServiceImpl implements ServerService {
             handleServerLocation(server, ngxServer);
 
             nginxConfigService.saveNgxConf(conf, ip);
-            conf.getTokens().clear();
-            nginxService.save(conf, ip);
         } catch (Exception e) {
             nginxService.bak(bakConf, ip);
             throw new NginxException(e.getMessage());
@@ -131,8 +134,6 @@ public class ServerServiceImpl implements ServerService {
             }
 
             nginxConfigService.saveNgxConf(conf, ip);
-            conf.getTokens().clear();
-            nginxService.save(conf, ip);
         } catch (Exception e) {
             nginxService.bak(bakConf, ip);
             throw new NginxException("已回滚到上次配置:");
@@ -267,7 +268,7 @@ public class ServerServiceImpl implements ServerService {
                 NgxBlock ngxServer = (NgxBlock) ngxEntry;
                 String port = getPort(ngxServer);
                 String serverName = getServerName(ngxServer);
-                if (server.getPort() == Integer.valueOf(port)
+                if (port.equals(String.valueOf(server.getPort()))
                         && serverName.equals(server.getName())) {
                     return ngxServer;
                 }

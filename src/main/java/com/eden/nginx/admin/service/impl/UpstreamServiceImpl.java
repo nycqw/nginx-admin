@@ -5,9 +5,11 @@ import com.alibaba.dubbo.config.annotation.Service;
 import com.eden.nginx.admin.common.util.NgxUtil;
 import com.eden.nginx.admin.domain.dto.NginxUpstream;
 import com.eden.nginx.admin.exception.NginxException;
+import com.eden.nginx.admin.service.NginxConfigService;
 import com.eden.nginx.admin.service.NginxService;
 import com.eden.nginx.admin.service.UpstreamService;
 import com.github.odiszapc.nginxparser.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 
 import javax.validation.constraints.NotEmpty;
@@ -23,13 +25,15 @@ import java.util.List;
 @Service
 public class UpstreamServiceImpl implements UpstreamService {
 
-    @Reference
+    @Autowired
+    private NginxConfigService nginxConfigService;
+
+    @Autowired
     private NginxService nginxService;
 
     @Override
     public List<NginxUpstream> list(String ip) {
-        NgxConfig ngxConfig = nginxService.read(ip);
-
+        NgxConfig ngxConfig = nginxConfigService.getNgxConf(ip);
         List<NginxUpstream> nginxUpstreams = new ArrayList<>();
         List<NgxBlock> upstreamList = NgxUtil.findBlock(ngxConfig, "upstream");
         for (int i=0; i<upstreamList.size(); i++) {
@@ -65,8 +69,8 @@ public class UpstreamServiceImpl implements UpstreamService {
 
     @Override
     public void save(NginxUpstream nginxUpstream) {
-        @NotEmpty String ip = nginxUpstream.getIp();
-        NgxConfig conf = nginxService.read(ip);
+        String ip = nginxUpstream.getIp();
+        NgxConfig conf = nginxConfigService.getNgxConf(ip);
         String bakConf = NgxUtil.toString(conf);
         List<NgxBlock> upstreamList = NgxUtil.findBlock(conf, "upstream");
 
@@ -79,7 +83,7 @@ public class UpstreamServiceImpl implements UpstreamService {
                 conf.addEntry(upstream);
             }
             handlerServerAddress(nginxUpstream, upstream);
-            nginxService.save(conf, ip);
+            nginxConfigService.saveNgxConf(conf, ip);
         } catch (Exception e) {
             nginxService.bak(bakConf, ip);
             throw new NginxException(e.getMessage());
@@ -89,7 +93,7 @@ public class UpstreamServiceImpl implements UpstreamService {
     @Override
     public void delete(NginxUpstream nginxUpstream) {
         String ip = nginxUpstream.getIp();
-        NgxConfig conf = nginxService.read(ip);
+        NgxConfig conf = nginxConfigService.getNgxConf(ip);
         String bakConf = NgxUtil.toString(conf);
         List<NgxBlock> upstreamList = NgxUtil.findBlock(conf, "upstream");
 
@@ -97,7 +101,7 @@ public class UpstreamServiceImpl implements UpstreamService {
             NgxBlock upstream = findUpstream(nginxUpstream, upstreamList);
             if (upstream != null) {
                 conf.remove(upstream);
-                nginxService.save(conf, ip);
+                nginxConfigService.saveNgxConf(conf, ip);
             }
         } catch (Exception e) {
             nginxService.bak(bakConf, ip);

@@ -17,6 +17,7 @@
     select 
     <include refid="Base_Column_List" />
     from sys_server
+    where status = 1
   </select>
 
   <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >

@@ -9,5 +9,4 @@ public interface NginxConfigService {
 
     void saveNgxConf(NgxBlock ngxBlock, String ip);
 
-    NgxConfig recoveryNgxConf(int id);
 }

@@ -1,12 +1,12 @@
 package com.eden.nginx.admin.service;
 
 
-import com.github.odiszapc.nginxparser.NgxConfig;
+import com.eden.resource.client.common.dto.NginxBlock;
 
 public interface NginxService {
-    NgxConfig read(String ip);
+    NginxBlock read(String ip);
 
-    void save(NgxConfig conf, String ip);
+    void save(NginxBlock nginxBlock, String ip);
 
     void bak(String conf, String ip);
 }

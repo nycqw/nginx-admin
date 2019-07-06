@@ -21,15 +21,14 @@ public class NginxServiceImpl implements NginxService {
     private final String BAK = "/nginx/bak";
 
     @Override
-    public NgxConfig read(String ip) {
+    public NginxBlock read(String ip) {
         try {
             String response = HttpUtils.get(getUrl(ip, READ));
             JSONObject parseObject = JSONObject.parseObject(response);
             Integer code = parseObject.getInteger("code");
             if (code == 1) {
                 String data = parseObject.getString("data");
-                NginxBlock nginxBlock = JSONObject.parseObject(data, NginxBlock.class);
-                return NginxTransferHandler.reverseNgxConfig(nginxBlock);
+                return JSONObject.parseObject(data, NginxBlock.class);
             } else {
                 throw new NginxException(parseObject.getString("message"));
             }
@@ -40,11 +39,9 @@ public class NginxServiceImpl implements NginxService {
     }
 
     @Override
-    public void save(NgxConfig conf, String ip) {
-        NginxBlock nginxBlock = NginxTransferHandler.transferNgxConfig(conf);
-        String params = JSONObject.toJSONString(nginxBlock);
+    public void save(NginxBlock nginxBlock, String ip) {
         try {
-            String response = HttpUtils.post(getUrl(ip, SAVE), params);
+            String response = HttpUtils.post(getUrl(ip, SAVE), nginxBlock);
             JSONObject parseObject = JSONObject.parseObject(response);
             Integer code = parseObject.getInteger("code");
             if (code != 1) {
