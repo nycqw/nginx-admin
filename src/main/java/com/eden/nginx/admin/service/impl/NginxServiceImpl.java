@@ -2,15 +2,14 @@ package com.eden.nginx.admin.service.impl;
 
 
 import com.alibaba.dubbo.config.annotation.Service;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.eden.nginx.admin.common.util.HttpUtils;
 import com.eden.nginx.admin.exception.NginxException;
 import com.eden.nginx.admin.service.NginxService;
-import com.github.odiszapc.nginxparser.*;
+import com.eden.resource.client.common.dto.NginxBlock;
+import com.eden.resource.client.service.NginxTransferHandler;
+import com.github.odiszapc.nginxparser.NgxConfig;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Iterator;
 
 @Service
 @Slf4j
@@ -28,18 +27,9 @@ public class NginxServiceImpl implements NginxService {
             JSONObject parseObject = JSONObject.parseObject(response);
             Integer code = parseObject.getInteger("code");
             if (code == 1) {
-                JSONObject data = parseObject.getJSONObject("data");
-                NgxConfig ngxConfig = new NgxConfig();
-                NgxBlock ngxBlock = parseNgxConfig(data);
-                Iterator<NgxEntry> iterator = ngxBlock.getEntries().iterator();
-                while (iterator.hasNext()) {
-                    ngxConfig.addEntry(iterator.next());
-                }
-                Iterator<NgxToken> tokenIterator = ngxBlock.getTokens().iterator();
-                while (tokenIterator.hasNext()) {
-                    ngxConfig.addValue(tokenIterator.next().getToken());
-                }
-                return ngxConfig;
+                String data = parseObject.getString("data");
+                NginxBlock nginxBlock = JSONObject.parseObject(data, NginxBlock.class);
+                return NginxTransferHandler.reverseNgxConfig(nginxBlock);
             } else {
                 throw new NginxException(parseObject.getString("message"));
             }
@@ -49,32 +39,10 @@ public class NginxServiceImpl implements NginxService {
         }
     }
 
-    private NgxBlock parseNgxConfig(JSONObject data) {
-        NgxBlock ngxBlock = new NgxBlock();
-        ngxBlock.addValue(data.getString("name"));
-        ngxBlock.addValue(data.getString("value"));
-
-        JSONArray entries = data.getJSONArray("entries");
-        Iterator<Object> iterator = entries.iterator();
-        while (iterator.hasNext()) {
-            JSONObject next = (JSONObject)iterator.next();
-            JSONArray subEntries = next.getJSONArray("entries");
-            if (subEntries == null) {
-                NgxParam ngxParam = new NgxParam();
-                ngxParam.addValue(next.getString("name"));
-                ngxParam.addValue(next.getString("value"));
-                ngxBlock.addEntry(ngxParam);
-            } else {
-                NgxBlock subNgxBlock = parseNgxConfig(next);
-                ngxBlock.addEntry(subNgxBlock);
-            }
-        }
-        return ngxBlock;
-    }
-
     @Override
     public void save(NgxConfig conf, String ip) {
-        String params = JSONObject.toJSONString(conf);
+        NginxBlock nginxBlock = NginxTransferHandler.transferNgxConfig(conf);
+        String params = JSONObject.toJSONString(nginxBlock);
         try {
             String response = HttpUtils.post(getUrl(ip, SAVE), params);
             JSONObject parseObject = JSONObject.parseObject(response);

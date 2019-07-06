@@ -1,5 +1,6 @@
 package com.eden.nginx.admin.service;
 
+
 import com.github.odiszapc.nginxparser.NgxConfig;
 
 public interface NginxService {

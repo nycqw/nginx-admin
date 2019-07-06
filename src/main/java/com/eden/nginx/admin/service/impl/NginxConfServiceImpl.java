@@ -7,6 +7,7 @@ import com.eden.nginx.admin.mapper.NginxBlockMapper;
 import com.eden.nginx.admin.mapper.NginxParamMapper;
 import com.eden.nginx.admin.service.NginxConfigService;
 import com.eden.nginx.admin.service.NginxService;
+import com.eden.resource.client.service.NginxTransferHandler;
 import com.github.odiszapc.nginxparser.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,15 +36,11 @@ public class NginxConfServiceImpl implements NginxConfigService {
         NginxBlock params = new NginxBlock();
         params.setValue(ip);
         List<NginxBlock> nginxBlocks = nginxBlockMapper.selectBySelective(params);
-        NgxConfig ngxConfig;
         if (CollectionUtils.isEmpty(nginxBlocks)) {
-            ngxConfig = nginxService.read(ip);
+            NgxConfig ngxConfig = nginxService.read(ip);
             saveNgxConf(ngxConfig, ip);
-        } else {
-            int id = nginxBlocks.get(0).getId();
-            ngxConfig = recoveryNgxConf(id);
         }
-        return ngxConfig;
+        return recoveryNgxConf(nginxBlocks.get(0).getId());
     }
 
     /**
@@ -106,8 +103,10 @@ public class NginxConfServiceImpl implements NginxConfigService {
     private int saveNginxBlock(NgxBlock ngxBlock, String ip, Integer pid) {
         NginxBlock nginxBlock = new NginxBlock();
         Iterator<NgxToken> iterator = ngxBlock.getTokens().iterator();
-        nginxBlock.setName(iterator.next().getToken());
-        nginxBlock.setValue(getValue(iterator));
+        if (iterator.hasNext()) {
+            nginxBlock.setName(iterator.next().getToken());
+            nginxBlock.setValue(getValue(iterator));
+        }
         nginxBlock.setIp(ip);
         nginxBlock.setPid(pid);
         nginxBlockMapper.insert(nginxBlock);

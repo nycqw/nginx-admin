@@ -13,6 +13,8 @@ import com.eden.nginx.admin.service.NginxConfigService;
 import com.eden.nginx.admin.service.NginxService;
 import com.eden.nginx.admin.service.ServerService;
 import com.eden.nginx.admin.service.SysServerService;
+import com.eden.resource.client.common.dto.NginxBlock;
+import com.eden.resource.client.service.NginxTransferHandler;
 import com.github.odiszapc.nginxparser.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +51,7 @@ public class ServerServiceImpl implements ServerService {
         if (CollectionUtils.isEmpty(sysServers)) {
             return result;
         }
+
         for (SysServer sysServer : sysServers) {
             String ip = sysServer.getIp();
             NgxConfig conf = nginxConfigService.getNgxConf(ip);
