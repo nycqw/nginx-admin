@@ -1,6 +1,5 @@
 package com.eden.nginx.admin.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.eden.nginx.admin.common.util.NgxUtil;
 import com.eden.nginx.admin.domain.dto.NginxLocation;
@@ -8,13 +7,10 @@ import com.eden.nginx.admin.domain.dto.NginxServer;
 import com.eden.nginx.admin.domain.entity.NginxParam;
 import com.eden.nginx.admin.domain.entity.SysServer;
 import com.eden.nginx.admin.exception.NginxException;
-import com.eden.nginx.admin.mapper.NginxBlockMapper;
 import com.eden.nginx.admin.service.NginxConfigService;
 import com.eden.nginx.admin.service.NginxService;
 import com.eden.nginx.admin.service.ServerService;
 import com.eden.nginx.admin.service.SysServerService;
-import com.eden.resource.client.common.dto.NginxBlock;
-import com.eden.resource.client.service.NginxTransferHandler;
 import com.github.odiszapc.nginxparser.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

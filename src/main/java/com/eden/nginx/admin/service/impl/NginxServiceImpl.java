@@ -1,14 +1,12 @@
 package com.eden.nginx.admin.service.impl;
 
 
+import com.eden.nginx.admin.common.util.HttpUtil;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSONObject;
-import com.eden.nginx.admin.common.util.HttpUtils;
 import com.eden.nginx.admin.exception.NginxException;
 import com.eden.nginx.admin.service.NginxService;
 import com.eden.resource.client.common.dto.NginxBlock;
-import com.eden.resource.client.service.NginxTransferHandler;
-import com.github.odiszapc.nginxparser.NgxConfig;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -23,7 +21,7 @@ public class NginxServiceImpl implements NginxService {
     @Override
     public NginxBlock read(String ip) {
         try {
-            String response = HttpUtils.get(getUrl(ip, READ));
+            String response = HttpUtil.doGet(getUrl(ip, READ));
             JSONObject parseObject = JSONObject.parseObject(response);
             Integer code = parseObject.getInteger("code");
             if (code == 1) {
@@ -41,7 +39,7 @@ public class NginxServiceImpl implements NginxService {
     @Override
     public void save(NginxBlock nginxBlock, String ip) {
         try {
-            String response = HttpUtils.post(getUrl(ip, SAVE), nginxBlock);
+            String response = HttpUtil.doPostJson(getUrl(ip, SAVE), JSONObject.toJSONString(nginxBlock));
             JSONObject parseObject = JSONObject.parseObject(response);
             Integer code = parseObject.getInteger("code");
             if (code != 1) {
@@ -55,9 +53,8 @@ public class NginxServiceImpl implements NginxService {
 
     @Override
     public void bak(String conf, String ip) {
-        String params = JSONObject.toJSONString(conf);
         try {
-            String response = HttpUtils.post(getUrl(ip, BAK), params);
+            String response = HttpUtil.doPostJson(getUrl(ip, BAK), conf);
             JSONObject parseObject = JSONObject.parseObject(response);
             Integer code = parseObject.getInteger("code");
             if (code != 1) {
